@@ -56,8 +56,11 @@ object FootballApp {
       // Pénalité max de la france
       max(col("penalty_france")).alias("maxPenaltyFrance"),
       // Nombre de pénalité total reçu par la France moins nombre de pénalité total reçu parl’adversaire
-      (sum(col("penalty_france")) - sum(col("penalty_adversaire"))).alias("PenaltyFrance - PenaltyAdversaire")
+      (sum(col("penalty_france")) - sum(col("penalty_adversaire"))).alias("PenaltyFranceMinusPenaltyAdversaire")
     )
+
+    // Create the parquet file
+    statsMatch.write.parquet("stats.parquet")
 
     statsMatch.show()
     statsMatch.printSchema()
