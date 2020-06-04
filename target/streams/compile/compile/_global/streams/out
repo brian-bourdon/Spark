@@ -1,0 +1,4 @@
+[0m[[0m[31merror[0m] [0m[0mC:\Users\brian\IdeaProjects\Spark\src\main\scala\FootballApp.scala:6:39: not found: value logFile[0m
+[0m[[0m[31merror[0m] [0m[0m    val logData = spark.read.textFile(logFile).cache()[0m
+[0m[[0m[31merror[0m] [0m[0m                                      ^[0m
+[0m[[0m[31merror[0m] [0m[0mone error found[0m
