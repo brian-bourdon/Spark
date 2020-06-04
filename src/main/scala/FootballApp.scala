@@ -54,7 +54,9 @@ object FootballApp {
       // Nombre de match joué en coupe du monde
       sum(cdm_count_udf(col("competition")).cast(IntegerType)).alias("nbMatchCdm"),
       // Pénalité max de la france
-      max(col("penalty_france")).alias("maxPenaltyFrance")
+      max(col("penalty_france")).alias("maxPenaltyFrance"),
+      // Nombre de pénalité total reçu par la France moins nombre de pénalité total reçu parl’adversaire
+      (sum(col("penalty_france")) - sum(col("penalty_adversaire"))).alias("PenaltyFrance - PenaltyAdversaire")
     )
 
     statsMatch.show()
