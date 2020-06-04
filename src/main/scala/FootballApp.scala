@@ -1,7 +1,7 @@
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.types.{DateType, IntegerType, StringType, StructField, StructType}
-import org.apache.spark.sql.functions.{col, udf, when, year, avg, count, sum}
+import org.apache.spark.sql.functions.{col, udf, when, year, avg, count, sum, max}
 
 object FootballApp {
   def main(args: Array[String]) {
@@ -27,7 +27,7 @@ object FootballApp {
                 .withColumn("penalty_adversaire", when($"penalty_adversaire".isNull, 0))
                 .filter(year($"date") >= 1980)
                 .withColumn("Domicile", is_domicile_udf(col("match")))
-
+   // j'étais parti sur une window function mais vu que dans l'énoncé il faut faire une jointure, j'ai changé pour un group_by
     /*val window = Window.partitionBy(col("adversaire"))
     // Nombre de point moyen marqué par la France par match
     val nbPtsFranceAvg = avg(dfCsv.col("score_france")).over(window)
@@ -43,11 +43,18 @@ object FootballApp {
     val dfWithAvg = dfCsv.withColumn("nbMatchCdm", nbMatchCdm)*/
 
     val statsMatch = dfCsv.groupBy(dfCsv("adversaire")).agg(
+      // Nombre de point moyen marqué par la France par match
       avg(dfCsv.col("score_france")).alias("nbPtsFranceAvg"),
+      // Nombre de point moyen marqué par l'adversaire par match
       avg(dfCsv.col("score_adversaire")).alias("nbPtsAdversaireAvg"),
+      // Nombre de match joué total
       count("*").alias("nbMatch"),
+      // Pourcentage de match joué à domicile pour la France
       (sum(col("domicile").cast(IntegerType)) / count("*") * 100).alias("percentageDomicileFrance"),
-      sum(cdm_count_udf(col("competition")).cast(IntegerType)).alias("nbMatchCdm")
+      // Nombre de match joué en coupe du monde
+      sum(cdm_count_udf(col("competition")).cast(IntegerType)).alias("nbMatchCdm"),
+      // Pénalité max de la france
+      max(col("penalty_france")).alias("maxPenaltyFrance")
     )
 
     statsMatch.show()
