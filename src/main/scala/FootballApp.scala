@@ -1,6 +1,6 @@
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.types.{StructType, StructField, StringType, IntegerType};
-import org.apache.spark.sql.functions.{udf, col, when}
+import org.apache.spark.sql.types.{StructType, StructField, StringType, IntegerType, DateType};
+import org.apache.spark.sql.functions.{udf, col, when, year}
 
 object FootballApp {
   def main(args: Array[String]) {
@@ -18,9 +18,10 @@ object FootballApp {
     val dfCsv = spark.read.option("header", "true").option("sep", ",").csv("C:\\Users\\brian\\IdeaProjects\\Spark\\df_matches.csv")
                 .withColumnRenamed("X4", "match").withColumnRenamed("X6", "competition")
                 .select($"match", $"competition", $"adversaire", $"score_france".cast(IntegerType), $"score_adversaire".cast(IntegerType), $"penalty_france".cast(IntegerType),
-                  $"penalty_adversaire".cast(IntegerType), $"date")
+                  $"penalty_adversaire".cast(IntegerType), $"date".cast(DateType))
                 .withColumn("penalty_france", when($"penalty_france".isNull, 0))
                 .withColumn("penalty_adversaire", when($"penalty_adversaire".isNull, 0))
+                .filter(year($"date") >= 1980)
 
     dfCsv.show
     dfCsv.printSchema()
