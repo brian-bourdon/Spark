@@ -1,7 +1,7 @@
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.types.{DateType, IntegerType, StringType, StructField, StructType}
-import org.apache.spark.sql.functions.{col, udf, when, year, avg, count, sum, max}
+//import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.types.{DateType, IntegerType}
+import org.apache.spark.sql.functions.{col, udf, when, year, month, avg, count, sum, max}
 
 object FootballApp {
   def main(args: Array[String]) {
@@ -11,14 +11,9 @@ object FootballApp {
 
     // UDF that add a column domicile
     val is_domicile = (value:String) => (value.split("-")(0).trim() == "France")
-
     val is_domicile_udf = udf(is_domicile)
 
-    val cdm_count = (value:String) => (value.contains("Coupe du monde"))
-
-    val cdm_count_udf = udf(cdm_count)
-
-    // Create dataframe with the CSV data and rename the columns X4, X6
+    // Create dataframe with the CSV data, rename the columns X4, X6, filter and format some data
     val dfCsv = spark.read.option("header", "true").option("sep", ",").csv("C:\\Users\\brian\\IdeaProjects\\Spark\\df_matches.csv")
                 .withColumnRenamed("X4", "match").withColumnRenamed("X6", "competition")
                 .select($"match", $"competition", $"adversaire", $"score_france".cast(IntegerType), $"score_adversaire".cast(IntegerType), $"penalty_france".cast(IntegerType),
@@ -26,8 +21,9 @@ object FootballApp {
                 .withColumn("penalty_france", when($"penalty_france".isNull, 0))
                 .withColumn("penalty_adversaire", when($"penalty_adversaire".isNull, 0))
                 .filter(year($"date") >= 1980)
-                .withColumn("Domicile", is_domicile_udf(col("match")))
-   // j'étais parti sur une window function mais vu que dans l'énoncé il faut faire une jointure, j'ai changé pour un group_by
+                .withColumn("Domicile", is_domicile_udf(col("match"))) // add boolean if france play at home
+
+    // J'étais parti sur une window function mais vu que dans l'énoncé il est indiqué qu'il faut faire une jointure, j'ai changé pour un group_by
     /*val window = Window.partitionBy(col("adversaire"))
     // Nombre de point moyen marqué par la France par match
     val nbPtsFranceAvg = avg(dfCsv.col("score_france")).over(window)
@@ -42,6 +38,11 @@ object FootballApp {
 
     val dfWithAvg = dfCsv.withColumn("nbMatchCdm", nbMatchCdm)*/
 
+    // UDF that check if the a match is a CDM match
+    val cdm_count = (value:String) => (value.contains("Coupe du monde"))
+    val cdm_count_udf = udf(cdm_count)
+
+    // Calcul all the stats
     val statsMatch = dfCsv.groupBy(dfCsv("adversaire")).agg(
       // Nombre de point moyen marqué par la France par match
       avg(dfCsv.col("score_france")).alias("nbPtsFranceAvg"),
@@ -59,14 +60,22 @@ object FootballApp {
       (sum(col("penalty_france")) - sum(col("penalty_adversaire"))).alias("PenaltyFranceMinusPenaltyAdversaire")
     )
 
-    // Create the parquet file
+    // Create the stats parquet file
     statsMatch.write.parquet("stats.parquet")
 
+    // Join the machs data with those stats
     val dfJoinStats = dfCsv.join(
       statsMatch,
       (dfCsv("adversaire") === statsMatch("adversaire")),
       "inner"
     ).drop(statsMatch.col("adversaire"))
+
+    // Add the column year and month for the partition of the parquet file
+    val dfJoinStatsForParquet = dfJoinStats
+                                .withColumn("Year", year(col("date")))
+                                .withColumn("Month", month(col("date")))
+    // Create the result parquet file partition by year then month
+    dfJoinStatsForParquet.write.partitionBy("year", "month").parquet("result.parquet")
 
     dfJoinStats.show()
     dfJoinStats.printSchema()
