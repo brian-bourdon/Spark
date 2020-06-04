@@ -14,6 +14,10 @@ object FootballApp {
 
     val is_domicile_udf = udf(is_domicile)
 
+    val cdm_count = (value:String) => (value.contains("Coupe du monde"))
+
+    val cdm_count_udf = udf(cdm_count)
+
     // Create dataframe with the CSV data and rename the columns X4, X6
     val dfCsv = spark.read.option("header", "true").option("sep", ",").csv("C:\\Users\\brian\\IdeaProjects\\Spark\\df_matches.csv")
                 .withColumnRenamed("X4", "match").withColumnRenamed("X6", "competition")
@@ -24,7 +28,7 @@ object FootballApp {
                 .filter(year($"date") >= 1980)
                 .withColumn("Domicile", is_domicile_udf(col("match")))
 
-    val window = Window.partitionBy(col("adversaire"))
+    /*val window = Window.partitionBy(col("adversaire"))
     // Nombre de point moyen marqué par la France par match
     val nbPtsFranceAvg = avg(dfCsv.col("score_france")).over(window)
     // Nombre de point moyen marqué par l'adversaire par match
@@ -33,12 +37,21 @@ object FootballApp {
     val nbMatch = count("*").over(window)
     // Pourcentage de match joué à domicile pour la France
     val percentageDomicileFrance =  sum(col("domicile").cast(IntegerType)).over(window) / nbMatch * 100
+    // Nombre de match joué en coupe du monde
+    val nbMatchCdm = sum(cdm_count_udf(col("competition")).cast(IntegerType)).over(window)
 
-    val dfWithAvg = dfCsv.withColumn("percentageDomicileFrance", percentageDomicileFrance)
+    val dfWithAvg = dfCsv.withColumn("nbMatchCdm", nbMatchCdm)*/
 
+    val statsMatch = dfCsv.groupBy(dfCsv("adversaire")).agg(
+      avg(dfCsv.col("score_france")).alias("nbPtsFranceAvg"),
+      avg(dfCsv.col("score_adversaire")).alias("nbPtsAdversaireAvg"),
+      count("*").alias("nbMatch"),
+      (sum(col("domicile").cast(IntegerType)) / count("*") * 100).alias("percentageDomicileFrance"),
+      sum(cdm_count_udf(col("competition")).cast(IntegerType)).alias("nbMatchCdm")
+    )
 
-    dfWithAvg.show()
-    dfWithAvg.printSchema()
+    statsMatch.show()
+    statsMatch.printSchema()
     spark.stop()
   }
 }
