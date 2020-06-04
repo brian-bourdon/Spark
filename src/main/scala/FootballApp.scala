@@ -62,8 +62,14 @@ object FootballApp {
     // Create the parquet file
     statsMatch.write.parquet("stats.parquet")
 
-    statsMatch.show()
-    statsMatch.printSchema()
+    val dfJoinStats = dfCsv.join(
+      statsMatch,
+      (dfCsv("adversaire") === statsMatch("adversaire")),
+      "inner"
+    ).drop(statsMatch.col("adversaire"))
+
+    dfJoinStats.show()
+    dfJoinStats.printSchema()
     spark.stop()
   }
 }
