@@ -1,3 +1,7 @@
-[info] FootballAppTest:
-[info] getMaxFromColumn
-[info] - should return the max value of a given column in a given DataFrame
+[0m[[0m[0minfo[0m] [0m[0m[32mFootballAppTest:[0m[0m
+[0m[[0m[0minfo[0m] [0m[0m[32mcountDfCsv[0m[0m
+[0m[[0m[0minfo[0m] [0m[0m[32m- should return the number of row of the csv DataFrame(442) filtered[0m[0m
+[0m[[0m[0minfo[0m] [0m[0m[32mx4X6NotPresent[0m[0m
+[0m[[0m[0minfo[0m] [0m[0m[32m- should return true if X4 and X6 column are not present[0m[0m
+[0m[[0m[0minfo[0m] [0m[0m[32mallColumnPresent[0m[0m
+[0m[[0m[0minfo[0m] [0m[0m[32m- should return true if all column are present[0m[0m
