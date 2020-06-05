@@ -8,7 +8,7 @@ class FootballAppTest extends FlatSpec with Matchers {
 
   val dfCsv = FootballApp.createCsvDf(spark)
   val dfStats = crateDfStats(dfCsv)
-  val dfAllStats = createDfAllStats(dfCsv, dfStats)
+  val dfJoinStats = createDfJoinStats(dfCsv, dfStats)
   "countDfCsv" should "return the number of row of the csv DataFrame(442) filtered" in {
     // When
     val countDfCsv = dfCsv.count()
@@ -48,4 +48,27 @@ class FootballAppTest extends FlatSpec with Matchers {
     // Then
     allDfStatsColumnPresent shouldBe true
   }
+
+  "allDJoinStatsColumnPresent" should "return true if all column are present in the join data frame" in {
+    // When
+    val allDJoinStatsColumnPresent = hasColumn(dfJoinStats, "match") &&
+      hasColumn(dfJoinStats, "competition") &&
+      hasColumn(dfJoinStats, "adversaire") &&
+      hasColumn(dfJoinStats, "score_france") &&
+      hasColumn(dfJoinStats, "score_adversaire") &&
+      hasColumn(dfJoinStats, "penalty_france") &&
+      hasColumn(dfJoinStats, "penalty_adversaire") &&
+      hasColumn(dfJoinStats, "date") &&
+      hasColumn(dfJoinStats, "nbPtsFranceAvg") &&
+      hasColumn(dfJoinStats, "nbPtsAdversaireAvg") &&
+      hasColumn(dfJoinStats, "nbMatch") &&
+      hasColumn(dfJoinStats, "percentageDomicileFrance") &&
+      hasColumn(dfJoinStats, "nbMatchCdm") &&
+      hasColumn(dfJoinStats, "maxPenaltyFrance") &&
+      hasColumn(dfJoinStats, "PenaltyFranceMinusPenaltyAdversaire")
+    // Then
+    allDJoinStatsColumnPresent shouldBe true
+  }
 }
+
+

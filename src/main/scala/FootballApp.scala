@@ -70,7 +70,7 @@ object FootballApp {
   }
 
   // Join the machs data with those stats and return a dataframe
-  def createDfAllStats(dfCsv: DataFrame, dfStats: DataFrame): DataFrame = {
+  def createDfJoinStats(dfCsv: DataFrame, dfStats: DataFrame): DataFrame = {
     dfCsv.join(
       dfStats,
       (dfCsv("adversaire") === dfStats("adversaire")),
@@ -88,16 +88,16 @@ object FootballApp {
     dfStats.write.parquet(".\\parquet\\stats.parquet")
 
     // Create the result parquet file
-    val dfAllStats = createDfAllStats(dfCsv, dfStats)
+    val dfJoinStats = createDfJoinStats(dfCsv, dfStats)
     // Add the column year and month for the partition of the parquet file
-    val dfAllStatsForParquet = dfAllStats
+    val dfAllStatsForParquet = dfJoinStats
       .withColumn("Year", year(col("date")))
       .withColumn("Month", month(col("date")))
     // Create the final result parquet file partitioned by year then month
     dfAllStatsForParquet.write.partitionBy("year", "month").parquet(".\\parquet\\result.parquet")
 
-    dfAllStats.show()
-    dfAllStats.printSchema()
+    dfJoinStats.show()
+    dfJoinStats.printSchema()
     spark.stop()
   }
 }
