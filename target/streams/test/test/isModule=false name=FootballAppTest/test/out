@@ -1,0 +1,3 @@
+[info] FootballAppTest:
+[info] getMaxFromColumn
+[info] - should return the max value of a given column in a given DataFrame
