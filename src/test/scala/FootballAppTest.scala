@@ -71,11 +71,11 @@ class FootballAppTest extends FlatSpec with Matchers {
     allJoinStatsColumnPresent shouldBe true
   }
 
-  "countDfallJoinStats" should "return the same number of row than the initial filtered csv data frame(442)" in {
+  "countDfAllJoinStats" should "return the same number of row than the initial filtered csv data frame(442)" in {
     // When
-    val countDfallJoinStats = dfJoinStats.count()
+    val countDfAllJoinStats = dfJoinStats.count()
     // Then
-    countDfallJoinStats shouldBe countDfCsv
+    countDfAllJoinStats shouldBe countDfCsv
   }
 
 }

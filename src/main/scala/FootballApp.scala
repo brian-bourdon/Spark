@@ -1,5 +1,3 @@
-import java.io.FileNotFoundException
-
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.types.{DateType, IntegerType}
@@ -46,7 +44,7 @@ object FootballApp {
     val nbMatchCdm = sum(cdm_count_udf(col("competition")).cast(IntegerType)).over(window)
 
     val dfWithAvg = dfCsv.withColumn("nbMatchCdm", nbMatchCdm)
-    return dfWithAvg
+    dfWithAvg
   }
 
   // Calcul/add all the stats and return a dataframe
