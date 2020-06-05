@@ -1,7 +1,9 @@
+import java.io.FileNotFoundException
+
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.types.{DateType, IntegerType}
-import org.apache.spark.sql.functions.{col, udf, when, year, month, avg, count, sum, max}
+import org.apache.spark.sql.functions.{avg, col, count, max, month, sum, udf, when, year}
 
 object FootballApp {
   // UDF that add a column domicile
@@ -11,15 +13,15 @@ object FootballApp {
   // Create dataframe with the CSV data, rename the columns X4, X6, filter and format some data
   def createCsvDf(spark: SparkSession): DataFrame = {
     import spark.implicits._
-    spark.read.option("header", "true").option("sep", ",").csv("C:\\Users\\brian\\IdeaProjects\\Spark\\df_matches.csv")
-      .withColumnRenamed("X4", "match").withColumnRenamed("X6", "competition")
-      .select($"match", $"competition", $"adversaire", $"score_france".cast(IntegerType), $"score_adversaire".cast(IntegerType), $"penalty_france".cast(IntegerType),
-        $"penalty_adversaire".cast(IntegerType), $"date".cast(DateType))
-      .withColumn("penalty_france", when($"penalty_france".isNull, 0))
-      .withColumn("penalty_adversaire", when($"penalty_adversaire".isNull, 0))
-      .filter(year($"date") >= 1980)
-      .withColumn("Domicile", is_domicile_udf(col("match"))) // add boolean if france play at home
-      .cache()
+      spark.read.option("header", "true").option("sep", ",").csv(System.getProperty("user.dir")+"\\src\\main\\ressources\\df_matches.csv")
+        .withColumnRenamed("X4", "match").withColumnRenamed("X6", "competition")
+        .select($"match", $"competition", $"adversaire", $"score_france".cast(IntegerType), $"score_adversaire".cast(IntegerType), $"penalty_france".cast(IntegerType),
+          $"penalty_adversaire".cast(IntegerType), $"date".cast(DateType))
+        .withColumn("penalty_france", when($"penalty_france".isNull, 0))
+        .withColumn("penalty_adversaire", when($"penalty_adversaire".isNull, 0))
+        .filter(year($"date") >= 1980)
+        .withColumn("Domicile", is_domicile_udf(col("match"))) // add boolean if france play at home
+        .cache()
   }
 
   // UDF that check if the a match is a CDM match
@@ -83,7 +85,7 @@ object FootballApp {
     val dfStats = crateDfStats(dfCsv)
 
     // Create the stats parquet file
-    dfStats.write.parquet("stats.parquet")
+    dfStats.write.parquet(".\\parquet\\stats.parquet")
 
     // Create the result parquet file
     val dfAllStats = createDfAllStats(dfCsv, dfStats)
@@ -92,7 +94,7 @@ object FootballApp {
       .withColumn("Year", year(col("date")))
       .withColumn("Month", month(col("date")))
     // Create the final result parquet file partitioned by year then month
-    dfAllStatsForParquet.write.partitionBy("year", "month").parquet("result.parquet")
+    dfAllStatsForParquet.write.partitionBy("year", "month").parquet(".\\parquet\\result.parquet")
 
     dfAllStats.show()
     dfAllStats.printSchema()
